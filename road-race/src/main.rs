@@ -6,26 +6,48 @@ mod logics;
 use logics::{
     events::handle_collision,
     inputs::control_inputs,
-    movement::{obstacle_movement, player_movement, road_movement},
+    movement::{obstacle_movement, player_one_movement, player_two_movement, road_movement},
     render::render_layout,
 };
 
-#[derive(Resource)]
-pub struct GameState {
+pub struct Player {
     health: u8,
     direction: f32,
+    preset: SpritePreset,
+    label: String,
+}
+
+impl Player {
+    pub fn new(label: &str, preset: SpritePreset) -> Self {
+        Self {
+            health: 25,
+            label: label.to_string(),
+            preset,
+            direction: 0.0,
+        }
+    }
+}
+
+#[derive(Resource)]
+pub struct GameState {
+    players: [Player; 2],
     obstacles: Vec<SpritePreset>,
 }
 
 impl Default for GameState {
     fn default() -> Self {
         Self {
-            health: 25,
-            direction: 0.0,
+            players: [
+                Player::new("player-1", SpritePreset::RacingCarBlack),
+                Player::new("player-2", SpritePreset::RacingCarRed),
+            ],
             obstacles: vec![
                 SpritePreset::RacingBarrierWhite,
                 SpritePreset::RacingConeStraight,
+                SpritePreset::RacingConeStraight,
+                SpritePreset::RacingConeStraight,
                 SpritePreset::RacingBarrierRed,
+                SpritePreset::RacingBarrierWhite,
                 SpritePreset::RacingBarrierWhite,
                 SpritePreset::RacingConeStraight,
                 SpritePreset::RacingBarrierRed,
@@ -51,12 +73,14 @@ fn main() {
     game.audio_manager
         .play_music(MusicPreset::WhimsicalPopsicle, 0.15);
 
-    // Render player sprite once.
-    let player = game.add_sprite("player", SpritePreset::RacingCarBlack);
+    // Render players sprite once.
+    for player in &game_state.players {
+        let player = game.add_sprite(&player.label, player.preset);
 
-    player.scale = 0.75;
-    player.layer = 10.0;
-    player.collision = true;
+        player.scale = 0.75;
+        player.layer = 10.0;
+        player.collision = true;
+    }
 
     // Render road lines
     let window_width = if !game.window_dimensions.x.is_zero() {
@@ -102,7 +126,8 @@ fn main() {
     // Logics
     game.add_logic(control_inputs);
     game.add_logic(render_layout);
-    game.add_logic(player_movement);
+    game.add_logic(player_one_movement);
+    game.add_logic(player_two_movement);
     game.add_logic(road_movement);
     game.add_logic(obstacle_movement);
     game.add_logic(handle_collision);
