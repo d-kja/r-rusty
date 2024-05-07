@@ -79,7 +79,7 @@ pub fn road_movement(engine: &mut Engine, state: &mut GameState) {
     let sprites = engine.sprites.values_mut();
 
     for sprite in sprites {
-        if !sprite.label.contains("roadline-") {
+        if !sprite.label.contains("roadline") {
             continue;
         }
 
@@ -89,8 +89,8 @@ pub fn road_movement(engine: &mut Engine, state: &mut GameState) {
         // have to travel to move them to the right most position
         let window_width = engine.window_dimensions.x;
 
-        if sprite.translation.x <= -(window_width / 1.5) {
-            sprite.translation.x = window_width + 250.0;
+        if sprite.translation.x <= -(window_width / 2.0) {
+            sprite.translation.x = window_width / 2.0;
         }
     }
 }

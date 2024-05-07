@@ -10,6 +10,7 @@ use logics::{
     render::render_layout,
 };
 
+#[derive(Clone)]
 pub struct Player {
     health: u8,
     direction: f32,
@@ -42,12 +43,6 @@ impl Default for GameState {
                 Player::new("player-2", SpritePreset::RacingCarRed),
             ],
             obstacles: vec![
-                SpritePreset::RacingBarrierWhite,
-                SpritePreset::RacingConeStraight,
-                SpritePreset::RacingConeStraight,
-                SpritePreset::RacingConeStraight,
-                SpritePreset::RacingBarrierRed,
-                SpritePreset::RacingBarrierWhite,
                 SpritePreset::RacingBarrierWhite,
                 SpritePreset::RacingConeStraight,
                 SpritePreset::RacingBarrierRed,
@@ -86,25 +81,34 @@ fn main() {
     let window_width = if !game.window_dimensions.x.is_zero() {
         game.window_dimensions.x
     } else {
-        1280.0
+        dimensions.x
     };
     let window_height = if !game.window_dimensions.y.is_zero() {
         game.window_dimensions.y
     } else {
-        720.0
+        dimensions.y
     };
 
-    let roadline_gap = 200.0;
-    let initial_roadline_amount = (window_width / 30.0) as u32;
+    let roadline_gap = 100.0;
+    let initial_roadline_amount = (window_width / roadline_gap) as u32;
+    let roadline_range = if initial_roadline_amount % 2 == 0 {
+        0..(initial_roadline_amount + 1) // inclusive range has it's own type 🥴
+    } else {
+        0..initial_roadline_amount
+    };
 
-    for idx in 0..initial_roadline_amount {
+    println!("{initial_roadline_amount}, {window_width}");
+
+    for idx in roadline_range {
         let road_sprite = game.add_sprite(
             format!("roadline-{}", idx),
             SpritePreset::RacingBarrierWhite,
         );
 
         road_sprite.scale = 0.1;
-        road_sprite.translation.x = roadline_gap * idx as f32 - window_width;
+
+        // translating to - window_width / 2.0 is bugging for some reason...
+        road_sprite.translation.x = roadline_gap * idx as f32;
     }
 
     // Render obstacles
