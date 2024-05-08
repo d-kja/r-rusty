@@ -14,6 +14,7 @@ use logics::{
 pub struct Player {
     health: u8,
     direction: f32,
+    current_rotation: f32,
     preset: SpritePreset,
     label: String,
 }
@@ -25,6 +26,7 @@ impl Player {
             label: label.to_string(),
             preset,
             direction: 0.0,
+            current_rotation: 0.0,
         }
     }
 }
@@ -68,15 +70,6 @@ fn main() {
     game.audio_manager
         .play_music(MusicPreset::WhimsicalPopsicle, 0.15);
 
-    // Render players sprite once.
-    for player in &game_state.players {
-        let player = game.add_sprite(&player.label, player.preset);
-
-        player.scale = 0.75;
-        player.layer = 10.0;
-        player.collision = true;
-    }
-
     // Render road lines
     let window_width = if !game.window_dimensions.x.is_zero() {
         game.window_dimensions.x
@@ -89,6 +82,23 @@ fn main() {
         dimensions.y
     };
 
+    let window_half_half_screen = window_height / 2.0 / 2.0;
+
+    // Render players sprite once.
+    for (idx, player) in game_state.players.clone().into_iter().enumerate() {
+        let player = game.add_sprite(&player.label, player.preset);
+
+        player.scale = 0.75;
+        player.layer = 10.0;
+        player.collision = true;
+
+        player.translation.y = if idx == 0 {
+            -window_half_half_screen
+        } else {
+            window_half_half_screen
+        };
+    }
+
     let roadline_gap = 100.0;
     let initial_roadline_amount = (window_width / roadline_gap) as u32;
     let roadline_range = if initial_roadline_amount % 2 == 0 {
@@ -97,11 +107,19 @@ fn main() {
         0..initial_roadline_amount
     };
 
-    println!("{initial_roadline_amount}, {window_width}");
+    // Lines in between
+    for idx in 0..(window_width / 10.0) as u32 {
+        let sprite = game.add_sprite(format!("divider-{}", idx), SpritePreset::RacingBarrierWhite);
 
-    for idx in roadline_range {
+        sprite.scale = 0.1;
+
+        sprite.translation.x = idx as f32 * 19.0 - window_width;
+    }
+
+    // First road
+    for idx in roadline_range.clone() {
         let road_sprite = game.add_sprite(
-            format!("roadline-{}", idx),
+            format!("roadline-first-{}", idx),
             SpritePreset::RacingBarrierWhite,
         );
 
@@ -109,6 +127,21 @@ fn main() {
 
         // translating to - window_width / 2.0 is bugging for some reason...
         road_sprite.translation.x = roadline_gap * idx as f32;
+        road_sprite.translation.y = -window_half_half_screen;
+    }
+
+    // Second road
+    for idx in roadline_range {
+        let road_sprite = game.add_sprite(
+            format!("roadline-second-{}", idx),
+            SpritePreset::RacingBarrierWhite,
+        );
+
+        road_sprite.scale = 0.1;
+
+        // translating to - window_width / 2.0 is bugging for some reason...
+        road_sprite.translation.x = roadline_gap * idx as f32;
+        road_sprite.translation.y = window_half_half_screen;
     }
 
     // Render obstacles
